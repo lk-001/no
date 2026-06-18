@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IC卡 - 增值服務</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', 'Noto Sans JP', 'Microsoft YaHei', sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            color: #333;
+        }
+        .header {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+        .lang-selector {
+            display: flex;
+            gap: 8px;
+        }
+        .lang-btn {
+            padding: 6px 14px;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #666;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+        .lang-btn:hover {
+            border-color: #999;
+            color: #333;
+        }
+        .lang-btn.active {
+            border-color: #333;
+            background: #333;
+            color: #fff;
+        }
+        .main-content {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 50px 40px;
+            text-align: center;
+        }
+        .main-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin-bottom: 40px;
+        }
+        .input-group {
+            margin-bottom: 30px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 12px;
+            color: #555;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 15px;
+            text-align: center;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #333;
+            background: #fff;
+        }
+        .confirm-btn {
+            width: 100%;
+            padding: 14px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 0;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            letter-spacing: 2px;
+        }
+        .confirm-btn:hover {
+            background: #555;
+        }
+        .loading-section {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .loading-text {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+        }
+        .windows-loader {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .windows-loader::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #e8e8e8;
+            border-top: 3px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .receipt {
+            display: none;
+            background: #fff;
+            border: 1px solid #333;
+            padding: 35px 30px;
+            margin-top: 10px;
+            text-align: left;
+            max-width: 380px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .receipt h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 16px;
+            font-weight: normal;
+            letter-spacing: 3px;
+        }
+        .receipt-item {
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #444;
+            line-height: 1.6;
+            letter-spacing: 0.5px;
+        }
+        .receipt-divider {
+            border: none;
+            border-top: 1px dashed #ccc;
+            margin: 20px 0;
+        }
+        .receipt-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        .receipt-btn {
+            padding: 8px 24px;
+            border: 1px solid #333;
+            background: #fff;
+            color: #333;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+        .receipt-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="lang-selector">
+            <button class="lang-btn active" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="ja">日语</button>
+            <button class="lang-btn" data-lang="en">英语</button>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <img src="train-image.png" alt="LK Pass" class="main-image" id="mainImage">
+        
+        <div class="input-section" id="inputSection">
+            <div class="input-group">
+                <label for="amount" id="amountLabel">請輸入增值金額</label>
+                <input type="number" id="amount" placeholder="請輸入增值金額" min="1">
+            </div>
+            <button class="confirm-btn" id="confirmBtn">確認增值</button>
+        </div>
+
+        <div class="loading-section" id="loadingSection">
+            <div class="loading-text" id="loadingText">正在支付中...</div>
+            <div class="windows-loader"></div>
+        </div>
+
+        <div class="receipt" id="receipt">
+            <h2>增值服務收據</h2>
+            <hr class="receipt-divider">
+            <div class="receipt-item" id="serviceItem">服務: 增值</div>
+            <div class="receipt-item" id="deductionItem">扣費: <span id="deductionAmount"></span></div>
+            <div class="receipt-item" id="orderItem">訂單號: <span id="orderNumber"></span></div>
+            <hr class="receipt-divider">
+            <div class="receipt-item" id="usageItem">使用方法: 在遊戲中輸入: /z <span id="usageOrderNumber"></span></div>
+            <div class="receipt-buttons">
+                <button class="receipt-btn print-btn" id="printBtn">打印</button>
+                <button class="receipt-btn download-btn" id="downloadBtn">下載</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            zh: {
+                amountLabel: '請輸入增值金額',
+                amountPlaceholder: '請輸入增值金額',
+                confirmBtn: '確認增值',
+                loadingText: '正在支付中...',
+                service: '服務: 增值',
+                deduction: '扣費: ',
+                order: '訂單號: ',
+                usage: '使用方法: 在遊戲中輸入: /lk z',
+                print: '打印',
+                download: '下載',
+                receiptTitle: '增值服務收據'
+            },
+            ja: {
+                amountLabel: 'チャージ金額を入力してください',
+                amountPlaceholder: 'チャージ金額を入力してください',
+                confirmBtn: 'チャージを確認',
+                loadingText: '支払い処理中...',
+                service: 'サービス: チャージ',
+                deduction: '差し引き: ',
+                order: '注文番号: ',
+                usage: '使用方法: ゲームで入力: /lk z',
+                print: '印刷',
+                download: 'ダウンロード',
+                receiptTitle: 'チャージサービス領収書'
+            },
+            en: {
+                amountLabel: 'Please enter recharge amount',
+                amountPlaceholder: 'Please enter recharge amount',
+                confirmBtn: 'Confirm Recharge',
+                loadingText: 'Processing payment...',
+                service: 'Service: Recharge',
+                deduction: 'Deduction: ',
+                order: 'Order Number: ',
+                usage: 'Usage: Enter in game: /lk z',
+                print: 'Print',
+                download: 'Download',
+                receiptTitle: 'Recharge Service Receipt'
+            }
+        };
+
+        let currentLang = 'zh';
+        let orderNumber = '';
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLang = this.dataset.lang;
+                updateLanguage();
+            });
+        });
+
+        function updateLanguage() {
+            const t = translations[currentLang];
+            document.getElementById('amountLabel').textContent = t.amountLabel;
+            document.getElementById('amount').placeholder = t.amountPlaceholder;
+            document.getElementById('confirmBtn').textContent = t.confirmBtn;
+            document.getElementById('loadingText').textContent = t.loadingText;
+            document.getElementById('serviceItem').textContent = t.service;
+            document.getElementById('printBtn').textContent = t.print;
+            document.getElementById('downloadBtn').textContent = t.download;
+            document.querySelector('.receipt h2').textContent = t.receiptTitle;
+            
+            if (orderNumber) {
+                const amount = document.getElementById('amount').value;
+                document.getElementById('deductionItem').innerHTML = t.deduction + '<span id="deductionAmount"></span>';
+                document.getElementById('orderItem').innerHTML = t.order + '<span id="orderNumber"></span>';
+                document.getElementById('usageItem').innerHTML = t.usage + amount + ' ' + '<span id="usageOrderNumber"></span>';
+                document.getElementById('deductionAmount').textContent = amount + '元';
+                document.getElementById('orderNumber').textContent = orderNumber;
+                document.getElementById('usageOrderNumber').textContent = orderNumber;
+            }
+        }
+
+        document.getElementById('confirmBtn').addEventListener('click', function() {
+            const amount = document.getElementById('amount').value;
+            if (!amount || amount <= 0) {
+                alert('請輸入有效的增值金額');
+                return;
+            }
+
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('mainImage').classList.add('hidden');
+            document.getElementById('loadingSection').style.display = 'block';
+
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let randomCode = '';
+            for (let i = 0; i < 8; i++) {
+                randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            orderNumber = 'LKicz' + randomCode;
+
+            setTimeout(() => {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('receipt').style.display = 'block';
+                
+                document.getElementById('deductionAmount').textContent = amount + '元';
+                document.getElementById('orderNumber').textContent = orderNumber;
+                document.getElementById('usageOrderNumber').textContent = orderNumber;
+                updateLanguage();
+            }, 10000);
+        });
+
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const receiptContent = `LK鐵路 - 增值服務收據
+==================
+服務: 增值
+扣費: ${document.getElementById('amount').value}元
+訂單號: ${orderNumber}
+使用方法: 在遊戲中輸入: /lk z ${document.getElementById('amount').value} ${orderNumber}
+==================`;
+            const blob = new Blob([receiptContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'receipt_' + orderNumber + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
